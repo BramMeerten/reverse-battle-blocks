@@ -59,13 +59,16 @@ export class Game {
     }
 
     private newStartPiece(player: Player) {
+        const newBlock = new Block(randomBlock(), this.getStartPos(player));
+        if (!this.collides(player, newBlock)) {
+            this.state.playerPieces[player] = newBlock;
+        }
+    }
+
+    private getStartPos(player: Player) {
         switch (player) {
-            case Player.TOP_PLAYER:
-                this.state.playerPieces[player] = new Block(randomBlock(), co(4, 0));
-                break;
-            case Player.BOTTOM_PLAYER:
-                this.state.playerPieces[player] = new Block(randomBlock(), co(4, 20));
-                break;
+            case Player.TOP_PLAYER: return co(9, 0);
+            case Player.BOTTOM_PLAYER: return co(9, 29); // TODO hardcoded
         }
     }
 }

@@ -15,7 +15,7 @@ function init() {
     const board = initBoard(state);
     const game = new Game(state);
 
-    setInterval(() => game.tick(), 1000);
+    setInterval(() => game.tick(), 250);
     handleInput(game);
 }
 
