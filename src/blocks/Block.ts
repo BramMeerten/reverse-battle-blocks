@@ -24,4 +24,11 @@ export class Block {
     rotate() {
         return new Block(this.block.rotate(), this.pos);
     }
+
+    // TODO improve
+    collides(other: Block): boolean {
+        return !!other.blocks.find(block => {
+            return this.blocks.find(bl => bl.x === block.x && bl.y === block.y)
+        });
+    }
 }

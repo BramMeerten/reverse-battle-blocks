@@ -1,6 +1,6 @@
 import {Color} from '../blocks/Color';
 import {Block} from '../blocks/Block';
-import {State} from './State';
+import {State} from '../game/State';
 
 export class Board {
 

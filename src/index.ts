@@ -4,14 +4,14 @@ import {co} from './blocks/Co';
 import {Block} from './blocks/Block';
 import {L_BLOCK} from './blocks/blocks';
 import {Game} from './game/Game';
-import {Board} from './game/Board';
+import {Board} from './view/Board';
 
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
     const state = initState();
     const board = initBoard(state);
-    const game = new Game(board, state);
+    const game = new Game(state);
 
     setInterval(() => game.tick(), 1000);
     handleInput(state);
