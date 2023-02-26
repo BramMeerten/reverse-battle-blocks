@@ -48,6 +48,9 @@ export class Board {
         switch (color) {
             case Color.RED: return '#ff0000';
             case Color.GREY: return '#aaaaaa';
+            case Color.GREEN: return '#00ff00';
+            case Color.YELLOW: return '#ffff00';
+            case Color.BLUE: return '#0000ff';
         }
     }
 }

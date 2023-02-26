@@ -29,10 +29,7 @@ function handleInput(game: Game) {
 
 function initState() {
     const state = new State();
-    state.playerPieces = {
-        0: new Block(L_BLOCK, co(4, 0)),
-        1: new Block(L_BLOCK, co(4, 20))
-    };
+
     state.addFrozenPiece(new Block(new UnplacedBlock([
         co(0, -1), co(1, -1), co(5, 0), co(6, 0), co(7, 1), co(8, 1),
         co(9, -1), co(10, -1), co(12, 0), co(14, 0), co(15, 0), co(16, 1), co(17, 1),

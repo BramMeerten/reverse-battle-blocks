@@ -1,4 +1,4 @@
-import {BehaviorSubject, map, Observable, ReplaySubject} from 'rxjs';
+import {BehaviorSubject, map, Observable} from 'rxjs';
 import {Block} from '../blocks/Block';
 import {Player} from './Player';
 
@@ -6,7 +6,8 @@ export class State {
 
     private activePiecesTrigger$ = new BehaviorSubject<void>(undefined);
     readonly activePieces$: Observable<Block[]> = this.activePiecesTrigger$.pipe(
-        map(_ => Object.values(this._playerPieces))
+        map(_ => Object.values(this._playerPieces)),
+        map(p => p.filter(x => !!x) as Block[])
     );
 
     private frozenPiecesTrigger$ = new BehaviorSubject<void>(undefined);
@@ -14,10 +15,10 @@ export class State {
         map(_ => Object.values(this._frozenPieces))
     );
 
-    private _playerPieces: { [key: number]: Block; } = {};
+    private _playerPieces: { [key: number]: Block | undefined; } = {};
     private _frozenPieces: Block[] = [];
 
-    public set playerPieces(pieces: { [key: number]: Block; }) {
+    public set playerPieces(pieces: { [key: number]: Block | undefined; }) {
         this._playerPieces = pieces;
         this.activePiecesTrigger$.next();
     }
@@ -27,10 +28,17 @@ export class State {
         this.frozenPiecesTrigger$.next();
     }
 
-    public updatePlayerPiece(player: Player, update: ((b: Block) => Block), options: {commit: boolean} = {commit: true}) {
-        this._playerPieces[player] = update(this._playerPieces[player]);
-        if (options.commit)
-            this.commit();
+    public updatePlayerPiece(player: Player, update: ((b: Block) => Block | undefined), options: {commit: boolean} = {commit: true}) {
+        const oldBlock = this._playerPieces[player];
+        let updated = false;
+        if (oldBlock) {
+            const newBlock = update(oldBlock);
+            this._playerPieces[player] = newBlock;
+            updated = oldBlock !== newBlock
+        }
+
+        if (options.commit) this.commit();
+        return updated;
     }
 
     public get playerPieces() {

@@ -2,14 +2,21 @@ import {State} from './State';
 import {Player} from './Player';
 import {Co, co} from '../blocks/Co';
 import {Block} from '../blocks/Block';
+import {randomBlock} from '../blocks/blocks';
 
 export class Game {
     constructor(private state: State) {
     }
 
     public tick() {
-        this.movePlayer(Player.TOP_PLAYER, co(0, 1), {commit: false});
-        this.movePlayer(Player.BOTTOM_PLAYER, co(0, -1), {commit: false});
+        const p1Moved = this.movePlayer(Player.TOP_PLAYER, co(0, 1), {commit: false});
+        const p2Moved = this.movePlayer(Player.BOTTOM_PLAYER, co(0, -1), {commit: false});
+
+        if (!p1Moved) this.freeze(Player.TOP_PLAYER);
+        if (!p2Moved) this.freeze(Player.BOTTOM_PLAYER);
+
+        if (!this.state.playerPieces[Player.TOP_PLAYER]) this.newStartPiece(Player.TOP_PLAYER);
+        if (!this.state.playerPieces[Player.BOTTOM_PLAYER]) this.newStartPiece(Player.BOTTOM_PLAYER);
 
         this.state.commit(); // TODO commit mss niet meer nodig als playerpieces geen object meer is
     }
@@ -22,7 +29,7 @@ export class Game {
     }
 
     public movePlayer(player: Player, direction: Co, options: {commit: boolean} = {commit: true}) {
-        this.state.updatePlayerPiece(player, piece => {
+        return this.state.updatePlayerPiece(player, piece => {
             const newBlock = piece.move(direction);
             return this.collides(player, newBlock) ? piece : newBlock;
         }, options);
@@ -32,7 +39,8 @@ export class Game {
     private collides(player: Player, newBlock: Block): boolean {
         if (Object.keys(this.state.playerPieces)
             .filter(k => k != player + '') // TODO stop using object met Player keys
-            .find(k => this.state.playerPieces[k as any as number]!.collides(newBlock))) {
+            .map(k => this.state.playerPieces[k as any as number])
+            .find(p => p && p.collides(newBlock))) {
             return true;
         } else if (this.state.frozenPieces
             .find(p => p.collides(newBlock))) {
@@ -40,6 +48,24 @@ export class Game {
         } else {
             return false;
         }
+    }
 
+    private freeze(player: Player) {
+        const piece = this.state.playerPieces[player];
+        if (piece) {
+            this.state.updatePlayerPiece(player, _ => undefined, {commit: false});
+            this.state.addFrozenPiece(piece);
+        }
+    }
+
+    private newStartPiece(player: Player) {
+        switch (player) {
+            case Player.TOP_PLAYER:
+                this.state.playerPieces[player] = new Block(randomBlock(), co(4, 0));
+                break;
+            case Player.BOTTOM_PLAYER:
+                this.state.playerPieces[player] = new Block(randomBlock(), co(4, 20));
+                break;
+        }
     }
 }
