@@ -31,7 +31,7 @@ export class Game {
     public movePlayer(player: Player, direction: Co, options: {commit: boolean} = {commit: true}) {
         return this.state.updatePlayerPiece(player, piece => {
             const newBlock = piece.move(direction);
-            return this.collides(player, newBlock) ? piece : newBlock;
+            return this.collides(player, newBlock) || this.isOutOfScreen(newBlock) ? piece : newBlock;
         }, options);
     }
 
@@ -48,6 +48,11 @@ export class Game {
         } else {
             return false;
         }
+    }
+
+    private isOutOfScreen(newBlock: Block): boolean {
+        return !!newBlock.blocks
+            .find(b => b.x < 0 || b.x >= this.state.width);
     }
 
     private freeze(player: Player) {
