@@ -4,8 +4,6 @@ import {State} from '../game/State';
 
 export class Board {
 
-    private readonly gridWidth = 20;
-    private readonly gridHeight = 30;
     private readonly ctx: CanvasRenderingContext2D;
     private readonly inactiveCtx: CanvasRenderingContext2D;
 
@@ -30,11 +28,11 @@ export class Board {
     }
 
     private get cellWidth() {
-        return this.activeCanvas.width / this.gridWidth;
+        return this.activeCanvas.width / this.state.width;
     }
 
     private get cellHeight() {
-        return this.activeCanvas.height / this.gridHeight;
+        return this.activeCanvas.height / this.state.height;
     }
 
     private drawBlock = (block: Block, ctx: CanvasRenderingContext2D = this.ctx) => {

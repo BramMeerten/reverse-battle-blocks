@@ -2,7 +2,6 @@ import {Inputs} from './input/Inputs';
 import {State} from './game/State';
 import {co} from './blocks/Co';
 import {Block} from './blocks/Block';
-import {L_BLOCK} from './blocks/blocks';
 import {Game} from './game/Game';
 import {Board} from './view/Board';
 import {UnplacedBlock} from './blocks/UnplacedBlock';
@@ -33,7 +32,7 @@ function initState() {
     state.addFrozenPiece(new Block(new UnplacedBlock([
         co(0, -1), co(1, -1), co(5, 0), co(6, 0), co(7, 1), co(8, 1),
         co(9, -1), co(10, -1), co(12, 0), co(14, 0), co(15, 0), co(16, 1), co(17, 1),
-    ], Color.GREY), co(0, 14)))
+    ], Color.GREY), co(0, Math.floor((state.height-1) / 2))))
     return state;
 }
 function initBoard(state: State) {

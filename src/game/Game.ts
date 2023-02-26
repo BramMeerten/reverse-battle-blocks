@@ -67,8 +67,8 @@ export class Game {
 
     private getStartPos(player: Player) {
         switch (player) {
-            case Player.TOP_PLAYER: return co(9, 0);
-            case Player.BOTTOM_PLAYER: return co(9, 29); // TODO hardcoded
+            case Player.TOP_PLAYER: return co(Math.floor(this.state.width / 2), 0);
+            case Player.BOTTOM_PLAYER: return co(Math.floor(this.state.width / 2), this.state.height-1);
         }
     }
 }

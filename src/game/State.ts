@@ -4,6 +4,9 @@ import {Player} from './Player';
 
 export class State {
 
+    readonly width = 20; // TODO use uneven numbers
+    readonly height = 30;
+
     private activePiecesTrigger$ = new BehaviorSubject<void>(undefined);
     readonly activePieces$: Observable<Block[]> = this.activePiecesTrigger$.pipe(
         map(_ => Object.values(this._playerPieces)),
