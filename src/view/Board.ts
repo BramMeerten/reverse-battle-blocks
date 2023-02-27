@@ -15,7 +15,7 @@ export class Board {
         if (!this.ctx || !this.inactiveCtx) throw Error('Could not get canvas content');
 
         this.state.activePieces$.subscribe(pieces => this.drawActive(pieces));
-        this.state.frozenPieces$.subscribe(pieces => this.drawInactive(pieces)); // TODO different canvas
+        this.state.frozenPieces$.subscribe(pieces => this.drawInactive(pieces));
     }
 
     public drawActive = (pieces: Block[]) => {

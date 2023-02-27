@@ -1,15 +1,18 @@
-import {Co} from './Co';
+import {co, Co} from './Co';
 import {UnplacedBlock} from './UnplacedBlock';
 
 export class Block {
 
+    public readonly boundingBox: {min: Co, max: Co};
+
     constructor(private readonly block: UnplacedBlock, public readonly pos: Co) {
         this.pos = pos;
+        this.boundingBox = this.calculateBoundingBox();
     }
 
     public get blocks() {
         return this.block.blocks.map(block => {
-            return {x: this.pos.x + block.x, y: this.pos.y + block.y};
+            return co(this.pos.x + block.x, this.pos.y + block.y);
         });
     }
 
@@ -25,10 +28,22 @@ export class Block {
         return new Block(this.block.rotate(), this.pos);
     }
 
-    // TODO improve
     collides(other: Block): boolean {
-        return !!other.blocks.find(block => {
-            return this.blocks.find(bl => bl.x === block.x && bl.y === block.y)
+        const boundingBoxesCollide =
+            this.boundingBox.min.x <= other.boundingBox.max.x &&
+            this.boundingBox.max.x >= other.boundingBox.min.x &&
+            this.boundingBox.min.y <= other.boundingBox.max.y &&
+            this.boundingBox.max.y >= other.boundingBox.min.y;
+        return boundingBoxesCollide && !!other.blocks.find(block => {
+            return this.blocks.find(bl => bl.equals(block))
         });
+    }
+
+    private calculateBoundingBox() {
+        const box = this.block.boundingBox;
+        return {
+            min: box.min.plus(this.pos),
+            max: box.max.plus(this.pos)
+        }
     }
 }
