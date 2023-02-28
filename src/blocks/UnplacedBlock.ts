@@ -1,8 +1,9 @@
 import {co, Co} from './Co';
 import {Color} from './Color';
+import {Area} from './Area';
 
 export class UnplacedBlock {
-    public readonly boundingBox: {min: Co, max: Co};
+    public readonly boundingBox: Area;
 
     constructor(public readonly blocks: Co[], public readonly color: Color) {
         this.boundingBox = this.calculateBoundingBox();
@@ -23,9 +24,9 @@ export class UnplacedBlock {
         return co(box.min.x + ((box.max.x - box.min.x) / 2), box.min.y)
     }
 
-    private calculateBoundingBox() {
+    private calculateBoundingBox(): Area {
         return this.blocks.reduce(
-                (prev, cur) => ({min: cur.min(prev.min), max: cur.max(prev.max)}),
-                {min: Co.MAX, max: Co.MIN});
+                (prev, cur) => new Area(cur.min(prev.min), cur.max(prev.max)),
+                new Area(Co.MAX, Co.MIN));
     }
 }

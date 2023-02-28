@@ -1,9 +1,10 @@
 import {co, Co} from './Co';
 import {UnplacedBlock} from './UnplacedBlock';
+import {Area} from './Area';
 
 export class Block {
 
-    public readonly boundingBox: {min: Co, max: Co};
+    public readonly boundingBox: Area;
 
     constructor(private readonly block: UnplacedBlock, public readonly pos: Co) {
         this.pos = pos;
@@ -29,11 +30,7 @@ export class Block {
     }
 
     collides(other: Block): boolean {
-        const boundingBoxesCollide =
-            this.boundingBox.min.x <= other.boundingBox.max.x &&
-            this.boundingBox.max.x >= other.boundingBox.min.x &&
-            this.boundingBox.min.y <= other.boundingBox.max.y &&
-            this.boundingBox.max.y >= other.boundingBox.min.y;
+        const boundingBoxesCollide =this.boundingBox.collides(other.boundingBox);
         return boundingBoxesCollide && !!other.blocks.find(block => {
             return this.blocks.find(bl => bl.equals(block))
         });
@@ -41,9 +38,6 @@ export class Block {
 
     private calculateBoundingBox() {
         const box = this.block.boundingBox;
-        return {
-            min: box.min.plus(this.pos),
-            max: box.max.plus(this.pos)
-        }
+        return new Area(box.min.plus(this.pos),box.max.plus(this.pos));
     }
 }
