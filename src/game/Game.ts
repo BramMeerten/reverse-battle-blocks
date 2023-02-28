@@ -3,9 +3,11 @@ import {Player} from './Player';
 import {Co, co} from '../blocks/Co';
 import {Block} from '../blocks/Block';
 import {randomBlock} from '../blocks/blocks';
+import {createDebris} from './debris';
 
 export class Game {
     constructor(private state: State) {
+        this.addDebris();
     }
 
     public tick() {
@@ -84,5 +86,11 @@ export class Game {
             case Player.TOP_PLAYER: return co(Math.floor(this.state.width / 2), 0);
             case Player.BOTTOM_PLAYER: return co(Math.floor(this.state.width / 2), this.state.height-1);
         }
+    }
+
+    private addDebris() {
+        const debrisHeight = 3;
+        const debris = createDebris(this.state.width, debrisHeight, 0.3);
+        this.state.addFrozenPiece(new Block(debris, co(0, Math.floor((this.state.height / 2) - (debrisHeight / 2)))));
     }
 }
