@@ -23,6 +23,7 @@ const config = {
     resolve: {
         extensions: ['.tsx', '.ts', '.jsx', '.js', '...'],
     },
+    devtool: 'eval-cheap-source-map',
 };
 
 module.exports = () => {
