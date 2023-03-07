@@ -5,7 +5,6 @@ export class MovingBlock {
     constructor(public readonly block: Block, public readonly direction: Co) {
     }
 
-    // TODO: Signature
     public move(direction?: Co): MovingBlock {
         return new MovingBlock(this.block.move(direction || this.direction), this.direction);
     }

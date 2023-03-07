@@ -1,5 +1,5 @@
 import {State} from './State';
-import {Player} from './Player';
+import {ALL_PLAYERS, Player} from './Player';
 import {Co, co} from '../blocks/Co';
 import {Block} from '../blocks/Block';
 import {randomBlock} from '../blocks/blocks';
@@ -14,20 +14,12 @@ export class Game {
     }
 
     public tick() {
+        const startPositions = this.state.playerPieces;
+
         this.handleFullLines();
-
-        const p1Pos = this.state.playerPieces.get(Player.TOP_PLAYER);
-        const p2Pos = this.state.playerPieces.get(Player.BOTTOM_PLAYER);
         this.state.activePieces.forEach(piece => this.moveActivePiece(piece));
-
-        // TODO
-        const newP1Pos = this.state.playerPieces.get(Player.TOP_PLAYER);
-        const newP2Pos = this.state.playerPieces.get(Player.BOTTOM_PLAYER);
-        if (p1Pos && newP1Pos && p1Pos.equals(newP1Pos)) this.freeze(Player.TOP_PLAYER);
-        if (p2Pos && newP2Pos && p2Pos.equals(newP2Pos)) this.freeze(Player.BOTTOM_PLAYER);
-
-        if (!newP1Pos) this.newStartPiece(Player.TOP_PLAYER);
-        if (!newP2Pos) this.newStartPiece(Player.BOTTOM_PLAYER);
+        this.freezePlayersIfNotMoved(startPositions);
+        this.addStartPiecesIfNeeded();
 
         this.state.propagateChanges();
     }
@@ -48,7 +40,7 @@ export class Game {
         this.updateActivePiece(block, block => block.move());
     }
 
-    private updateActivePiece(block: MovingBlock, update: ((block: MovingBlock) => MovingBlock), options: {propagateChanges: boolean} = {propagateChanges: false}) {
+    private updateActivePiece(block: MovingBlock, update: (block: MovingBlock) => MovingBlock, options: {propagateChanges: boolean} = {propagateChanges: false}) {
         const newBlock = update(block);
         if (!this.collides(newBlock, block) && !this.isOutOfScreen(newBlock.block)) {
             this.state.updateActivePiece(block, newBlock, options);
@@ -71,12 +63,29 @@ export class Game {
             .find(b => b.x < 0 || b.x >= this.state.width);
     }
 
+    private freezePlayersIfNotMoved(startPositions: Map<Player, MovingBlock>) {
+        const newPositions = this.state.playerPieces;
+        ALL_PLAYERS.forEach(player => {
+            const oldPosition = startPositions.get(player);
+            const newPosition = newPositions.get(player);
+            if (oldPosition && newPosition && oldPosition.equals(newPosition))
+                this.freeze(player);
+        });
+    }
+
     private freeze(player: Player) {
         const piece = this.state.playerPieces.get(player);
         if (piece) {
-            this.state.deletePlayerPiece(player);
+            this.state.removePlayerPiece(player);
             this.state.addFrozenPiece(piece.block);
         }
+    }
+
+    private addStartPiecesIfNeeded() {
+        ALL_PLAYERS.forEach(player => {
+            if (!this.state.playerPieces.get(player))
+                this.newStartPiece(player);
+        });
     }
 
     private newStartPiece(player: Player) {
@@ -117,16 +126,14 @@ export class Game {
         this.state.addFrozenPiece(new Block(b, co(0, 0)));
     }
 
-    // TODO refactor
     private handleFullLines() {
         const rows = new Set(this.state.activePieces
             .flatMap(active => active.block.blocks.map(b => b.y)));
         rows.forEach(row => {
-            const cols = new Set(this.state.allPieces
+            const cols = this.state.allPieces
                 .flatMap(piece => piece.blocks)
-                .filter(co => co.y === row)
-                .map(co => co.x));
-            if (cols.size >= this.state.width) {
+                .filter(co => co.y === row);
+            if (cols.length >= this.state.width) {
                 // 1. Remove frozen pieces
                 this.state.frozenPieces.forEach(frozen => {
                     const newBlocks = frozen.split(row);

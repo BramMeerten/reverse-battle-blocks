@@ -24,13 +24,14 @@ export class State {
     private _frozenPieces: Block[] = [];
     private frozenPiecesWereUpdated = false;
 
-    public addFrozenPiece(block: Block) {
-        this._frozenPieces.push(block);
-        this.frozenPiecesWereUpdated = true;
+    public updateActivePiece(prev: MovingBlock, newBlock: MovingBlock, options: {propagateChanges: boolean} = {propagateChanges: false}) {
+        const isUpdated = this.updatePlayerPiece(prev, newBlock) || this.updateUncontrollablePiece(prev, newBlock);
+        if (options.propagateChanges && isUpdated)
+            this.propagateChanges();
     }
 
-    public removeFrozenPiece(block: Block) {
-        this._frozenPieces = this._frozenPieces.filter(b => !b.equals(block));
+    public addFrozenPiece(block: Block) {
+        this._frozenPieces.push(block);
         this.frozenPiecesWereUpdated = true;
     }
 
@@ -38,43 +39,28 @@ export class State {
         this._uncontrolledPieces.push(block);
     }
 
+    public setPlayerPiece(player: Player, piece: MovingBlock) {
+        this._playerPieces.set(player, piece);
+    }
+
+    public removeFrozenPiece(block: Block) {
+        this._frozenPieces = this._frozenPieces.filter(b => !b.equals(block));
+        this.frozenPiecesWereUpdated = true;
+    }
+
     public removeActivePiece(block: MovingBlock) {
         for (const [player, b] of this._playerPieces.entries()) {
-            if (b.equals(block))
-                this._playerPieces.delete(player); // TODO kunt hier al breaken
+            if (b.equals(block)) {
+                this._playerPieces.delete(player);
+                return;
+            }
         }
 
         this._uncontrolledPieces = this._uncontrolledPieces.filter(b => !b.equals(block));
     }
 
-    // TODO refactor
-    public updateActivePiece(prev: MovingBlock, newBlock: MovingBlock | undefined, options: {propagateChanges: boolean} = {propagateChanges: false}) {
-        for (const [player, block] of this._playerPieces.entries()) {
-            if (block.equals(prev)) {
-                if (newBlock) this._playerPieces.set(player, newBlock);
-                else this._playerPieces.delete(player);
-                if (options.propagateChanges) this.propagateChanges();
-                return;
-            }
-        }
-
-        const index = this._uncontrolledPieces.findIndex(block => block.equals(prev));
-        if (index >= 0) {
-            this._uncontrolledPieces.splice(index, 1);
-            if (newBlock) this._uncontrolledPieces.push(newBlock);
-            if (options.propagateChanges) this.propagateChanges();
-            return;
-        }
-
-        throw Error('TODO should not occur');
-    }
-
-    public deletePlayerPiece(player: Player) {
+    public removePlayerPiece(player: Player) {
         this._playerPieces.delete(player);
-    }
-
-    public setPlayerPiece(player: Player, piece: MovingBlock) {
-        this._playerPieces.set(player, piece);
     }
 
     public get playerPieces() {
@@ -99,5 +85,26 @@ export class State {
             this.frozenPiecesTrigger$.next();
             this.frozenPiecesWereUpdated = false;
         }
+    }
+
+    private updatePlayerPiece(prev: MovingBlock, newBlock: MovingBlock): boolean {
+        for (const [player, block] of this._playerPieces.entries()) {
+            if (block.equals(prev)) {
+                this._playerPieces.set(player, newBlock);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private updateUncontrollablePiece(prev: MovingBlock, newBlock: MovingBlock) {
+        const index = this._uncontrolledPieces.findIndex(block => block.equals(prev));
+        if (index >= 0) {
+            this._uncontrolledPieces[index] = newBlock;
+            return true;
+        }
+
+        return false;
     }
 }
