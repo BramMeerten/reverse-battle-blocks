@@ -49,7 +49,9 @@ export class State {
         this.activePiecesTrigger$.next();
     }
 
-    public updatePlayerPiece(player: Player, update: ((b?: MovingBlock) => MovingBlock | undefined), options: {commit: boolean} = {commit: true}) {
+    public updatePlayerPiece(
+        player: Player, update: ((b?: MovingBlock) => MovingBlock | undefined),
+        options: {propagateChanges: boolean} = {propagateChanges: false}) {
         const oldBlock = this._playerPieces.get(player);
         const newBlock = update(oldBlock);
 
@@ -58,16 +60,14 @@ export class State {
         else
             this._playerPieces.delete(player);
 
-        if (options.commit) this.commit();
-        return newBlock !== oldBlock;
+        if (options.propagateChanges && newBlock !== oldBlock) this.propagateChanges();
     }
 
-    public updateActivePiece(prev: MovingBlock, newBlock?: MovingBlock, options: {commit: boolean} = {commit: true}) {
+    public updateActivePiece(prev: MovingBlock, newBlock: MovingBlock | undefined) {
         for (const [player, block] of this._playerPieces.entries()) {
             if (block.equals(prev)) {
                 if (newBlock) this._playerPieces.set(player, newBlock);
                 else this._playerPieces.delete(player);
-                if (options.commit) this.commit();
                 return;
             }
         }
@@ -76,7 +76,6 @@ export class State {
         if (index >= 0) {
             this._uncontrolledPieces.splice(index, 1);
             if (newBlock) this._uncontrolledPieces.push(newBlock);
-            if (options.commit) this.commit();
             return;
         }
 
@@ -99,7 +98,7 @@ export class State {
         return [...[...this.activePieces].map(x => x.block), ...this.frozenPieces];
     }
 
-    public commit() {
+    public propagateChanges() {
         this.activePiecesTrigger$.next();
     }
 }

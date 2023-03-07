@@ -16,12 +16,11 @@ export class Game {
     public tick() {
         this.handleFullLines();
 
-        // const p1Moved = this.movePlayer(Player.TOP_PLAYER, undefined, {commit: false});
-        // const p2Moved = this.movePlayer(Player.BOTTOM_PLAYER, undefined, {commit: false});
         const p1Pos = this.state.playerPieces.get(Player.TOP_PLAYER);
         const p2Pos = this.state.playerPieces.get(Player.BOTTOM_PLAYER);
-        this.state.activePieces.forEach(piece => this.moveActivePiece(piece), {commit: false});
+        this.state.activePieces.forEach(piece => this.moveActivePiece(piece));
 
+        // TODO
         const newP1Pos = this.state.playerPieces.get(Player.TOP_PLAYER);
         const newP2Pos = this.state.playerPieces.get(Player.BOTTOM_PLAYER);
         if (p1Pos && newP1Pos && p1Pos.equals(newP1Pos)) this.freeze(Player.TOP_PLAYER);
@@ -30,7 +29,7 @@ export class Game {
         if (!newP1Pos) this.newStartPiece(Player.TOP_PLAYER);
         if (!newP2Pos) this.newStartPiece(Player.BOTTOM_PLAYER);
 
-        this.state.commit();
+        this.state.propagateChanges();
     }
 
     public rotatePlayer(player: Player) {
@@ -38,22 +37,22 @@ export class Game {
             if (!piece) return piece;
             let newBlock = piece.rotate();
             return this.collides(player, newBlock.block) || this.isOutOfScreen(newBlock.block) ? piece : newBlock;
-        });
+        }, {propagateChanges: true});
     }
 
     // TODO bad signature
-    public movePlayer(player: Player, direction?: Co, options: {commit: boolean} = {commit: true}) {
-        return this.state.updatePlayerPiece(player, piece => {
+    public movePlayer(player: Player, direction: Co | undefined) {
+        this.state.updatePlayerPiece(player, piece => {
             if (!piece) return piece;
             const newBlock = piece.move(direction);
             return this.collides(player, newBlock.block) || this.isOutOfScreen(newBlock.block) ? piece : newBlock;
-        }, options);
+        }, {propagateChanges: true});
     }
 
-    public moveActivePiece(block: MovingBlock, options: {commit: boolean} = {commit: true}) {
+    public moveActivePiece(block: MovingBlock) {
         const newBlock = block.move();
         if (!this.collides2(newBlock, block) && !this.isOutOfScreen(newBlock.block)) {
-            this.state.updateActivePiece(block, newBlock, options);
+            this.state.updateActivePiece(block, newBlock);
         }
     }
 
@@ -87,7 +86,7 @@ export class Game {
     private freeze(player: Player) {
         const piece = this.state.playerPieces.get(player);
         if (piece) {
-            this.state.updatePlayerPiece(player, _ => undefined, {commit: false});
+            this.state.updatePlayerPiece(player, _ => undefined);
             this.state.addFrozenPiece(piece.block);
         }
     }
@@ -95,7 +94,7 @@ export class Game {
     private newStartPiece(player: Player) {
         const newBlock = this.getStartPiece(player);
         if (!this.collides(player, newBlock.block)) {
-            this.state.updatePlayerPiece(player, () => newBlock, {commit: false});
+            this.state.updatePlayerPiece(player, () => newBlock);
         }
     }
 
