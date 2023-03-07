@@ -36,6 +36,16 @@ export class Block {
         });
     }
 
+    split(row: number): Block[] {
+        return this.block.split(row - this.pos.y).map(b => new Block(b, this.pos));
+    }
+
+    equals(other: Block) {
+        return this.pos.equals(other.pos)
+            && this.color === other.color
+            && this.block.equals(other.block);
+    }
+
     private calculateBoundingBox() {
         const box = this.block.boundingBox;
         return new Area(box.min.plus(this.pos),box.max.plus(this.pos));

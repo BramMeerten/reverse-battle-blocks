@@ -1,6 +1,7 @@
 import {Color} from '../blocks/Color';
 import {Block} from '../blocks/Block';
 import {State} from '../game/State';
+import {MovingBlock} from '../blocks/MovingBlock';
 
 export class Board {
 
@@ -18,12 +19,13 @@ export class Board {
         this.state.frozenPieces$.subscribe(pieces => this.drawInactive(pieces));
     }
 
-    public drawActive = (pieces: Block[]) => {
+    public drawActive = (pieces: MovingBlock[]) => {
         this.ctx.clearRect(0, 0, this.activeCanvas.width, this.activeCanvas.height);
-        pieces.forEach(p => this.drawBlock(p));
+        pieces.forEach(p => this.drawBlock(p.block));
     }
 
     public drawInactive = (pieces: Block[]) => {
+        this.inactiveCtx.clearRect(0, 0, this.activeCanvas.width, this.activeCanvas.height);
         pieces.forEach(p => this.drawBlock(p, this.inactiveCtx));
     }
 

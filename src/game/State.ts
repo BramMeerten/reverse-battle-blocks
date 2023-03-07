@@ -1,6 +1,7 @@
 import {BehaviorSubject, map, Observable} from 'rxjs';
 import {Block} from '../blocks/Block';
 import {Player} from './Player';
+import {MovingBlock} from '../blocks/MovingBlock';
 
 export class State {
 
@@ -8,17 +9,18 @@ export class State {
     readonly height = 31;
 
     private activePiecesTrigger$ = new BehaviorSubject<void>(undefined);
-    readonly activePieces$: Observable<Block[]> = this.activePiecesTrigger$.pipe(
-        map(_ => [...this._playerPieces.values()]),
-        map(p => p.filter(x => !!x) as Block[])
+    readonly activePieces$: Observable<MovingBlock[]> = this.activePiecesTrigger$.pipe(
+        map(_ => this.activePieces),
+        map(p => p.filter(x => !!x) as MovingBlock[])
     );
 
     private frozenPiecesTrigger$ = new BehaviorSubject<void>(undefined);
     readonly frozenPieces$: Observable<Block[]> = this.frozenPiecesTrigger$.pipe(
-        map(_ => Object.values(this._frozenPieces))
+        map(_ => this.frozenPieces)
     );
 
-    private _playerPieces = new Map<Player, Block>();
+    private _playerPieces = new Map<Player, MovingBlock>();
+    private _uncontrolledPieces: MovingBlock[] = [];
     private _frozenPieces: Block[] = [];
 
     public addFrozenPiece(block: Block) {
@@ -26,7 +28,28 @@ export class State {
         this.frozenPiecesTrigger$.next();
     }
 
-    public updatePlayerPiece(player: Player, update: ((b?: Block) => Block | undefined), options: {commit: boolean} = {commit: true}) {
+    public removeFrozenPiece(block: Block) {
+        this._frozenPieces = this._frozenPieces.filter(b => !b.equals(block));
+        this.frozenPiecesTrigger$.next();
+    }
+
+    public addUncontrollablePiece(block: MovingBlock) { // TODO trigger/commit
+        this._uncontrolledPieces.push(block);
+        this.activePiecesTrigger$.next();
+    }
+
+    public removeActivePiece(block: MovingBlock) {
+        for (const [player, b] of this._playerPieces.entries()) {
+            if (b.equals(block))
+                this._playerPieces.delete(player); // TODO kunt hier al breaken
+        }
+
+        this._uncontrolledPieces = this._uncontrolledPieces.filter(b => !b.equals(block));
+
+        this.activePiecesTrigger$.next();
+    }
+
+    public updatePlayerPiece(player: Player, update: ((b?: MovingBlock) => MovingBlock | undefined), options: {commit: boolean} = {commit: true}) {
         const oldBlock = this._playerPieces.get(player);
         const newBlock = update(oldBlock);
 
@@ -39,12 +62,41 @@ export class State {
         return newBlock !== oldBlock;
     }
 
+    public updateActivePiece(prev: MovingBlock, newBlock?: MovingBlock, options: {commit: boolean} = {commit: true}) {
+        for (const [player, block] of this._playerPieces.entries()) {
+            if (block.equals(prev)) {
+                if (newBlock) this._playerPieces.set(player, newBlock);
+                else this._playerPieces.delete(player);
+                if (options.commit) this.commit();
+                return;
+            }
+        }
+
+        const index = this._uncontrolledPieces.findIndex(block => block.equals(prev));
+        if (index >= 0) {
+            this._uncontrolledPieces.splice(index, 1);
+            if (newBlock) this._uncontrolledPieces.push(newBlock);
+            if (options.commit) this.commit();
+            return;
+        }
+
+        throw Error('TODO should not occur');
+    }
+
     public get playerPieces() {
         return new Map([...this._playerPieces]);
     }
 
     public get frozenPieces() {
         return [...this._frozenPieces];
+    }
+
+    public get activePieces(): MovingBlock[] {
+        return [...this._playerPieces.values(), ...this._uncontrolledPieces];
+    }
+
+    public get allPieces(): Block[] {
+        return [...[...this.activePieces].map(x => x.block), ...this.frozenPieces];
     }
 
     public commit() {
