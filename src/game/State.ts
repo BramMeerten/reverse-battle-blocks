@@ -22,20 +22,20 @@ export class State {
     private _playerPieces = new Map<Player, MovingBlock>();
     private _uncontrolledPieces: MovingBlock[] = [];
     private _frozenPieces: Block[] = [];
+    private frozenPiecesWereUpdated = false;
 
     public addFrozenPiece(block: Block) {
         this._frozenPieces.push(block);
-        this.frozenPiecesTrigger$.next();
+        this.frozenPiecesWereUpdated = true;
     }
 
     public removeFrozenPiece(block: Block) {
         this._frozenPieces = this._frozenPieces.filter(b => !b.equals(block));
-        this.frozenPiecesTrigger$.next();
+        this.frozenPiecesWereUpdated = true;
     }
 
-    public addUncontrollablePiece(block: MovingBlock) { // TODO trigger/commit
+    public addUncontrollablePiece(block: MovingBlock) {
         this._uncontrolledPieces.push(block);
-        this.activePiecesTrigger$.next();
     }
 
     public removeActivePiece(block: MovingBlock) {
@@ -45,29 +45,15 @@ export class State {
         }
 
         this._uncontrolledPieces = this._uncontrolledPieces.filter(b => !b.equals(block));
-
-        this.activePiecesTrigger$.next();
     }
 
-    public updatePlayerPiece(
-        player: Player, update: ((b?: MovingBlock) => MovingBlock | undefined),
-        options: {propagateChanges: boolean} = {propagateChanges: false}) {
-        const oldBlock = this._playerPieces.get(player);
-        const newBlock = update(oldBlock);
-
-        if (newBlock)
-            this._playerPieces.set(player, newBlock);
-        else
-            this._playerPieces.delete(player);
-
-        if (options.propagateChanges && newBlock !== oldBlock) this.propagateChanges();
-    }
-
-    public updateActivePiece(prev: MovingBlock, newBlock: MovingBlock | undefined) {
+    // TODO refactor
+    public updateActivePiece(prev: MovingBlock, newBlock: MovingBlock | undefined, options: {propagateChanges: boolean} = {propagateChanges: false}) {
         for (const [player, block] of this._playerPieces.entries()) {
             if (block.equals(prev)) {
                 if (newBlock) this._playerPieces.set(player, newBlock);
                 else this._playerPieces.delete(player);
+                if (options.propagateChanges) this.propagateChanges();
                 return;
             }
         }
@@ -76,10 +62,19 @@ export class State {
         if (index >= 0) {
             this._uncontrolledPieces.splice(index, 1);
             if (newBlock) this._uncontrolledPieces.push(newBlock);
+            if (options.propagateChanges) this.propagateChanges();
             return;
         }
 
         throw Error('TODO should not occur');
+    }
+
+    public deletePlayerPiece(player: Player) {
+        this._playerPieces.delete(player);
+    }
+
+    public setPlayerPiece(player: Player, piece: MovingBlock) {
+        this._playerPieces.set(player, piece);
     }
 
     public get playerPieces() {
@@ -100,5 +95,9 @@ export class State {
 
     public propagateChanges() {
         this.activePiecesTrigger$.next();
+        if (this.frozenPiecesWereUpdated) {
+            this.frozenPiecesTrigger$.next();
+            this.frozenPiecesWereUpdated = false;
+        }
     }
 }

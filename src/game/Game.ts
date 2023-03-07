@@ -33,48 +33,36 @@ export class Game {
     }
 
     public rotatePlayer(player: Player) {
-        this.state.updatePlayerPiece(player, piece => {
-            if (!piece) return piece;
-            let newBlock = piece.rotate();
-            return this.collides(player, newBlock.block) || this.isOutOfScreen(newBlock.block) ? piece : newBlock;
-        }, {propagateChanges: true});
+        const piece = this.state.playerPieces.get(player);
+        if (piece)
+            this.updateActivePiece(piece, piece => piece.rotate(), {propagateChanges: true});
     }
 
-    // TODO bad signature
-    public movePlayer(player: Player, direction: Co | undefined) {
-        this.state.updatePlayerPiece(player, piece => {
-            if (!piece) return piece;
-            const newBlock = piece.move(direction);
-            return this.collides(player, newBlock.block) || this.isOutOfScreen(newBlock.block) ? piece : newBlock;
-        }, {propagateChanges: true});
+    public movePlayer(player: Player, direction: Co) {
+        const piece = this.state.playerPieces.get(player);
+        if (piece)
+            this.updateActivePiece(piece, piece => piece.move(direction), {propagateChanges: true});
     }
 
-    public moveActivePiece(block: MovingBlock) {
-        const newBlock = block.move();
-        if (!this.collides2(newBlock, block) && !this.isOutOfScreen(newBlock.block)) {
-            this.state.updateActivePiece(block, newBlock);
+    private moveActivePiece(block: MovingBlock) {
+        this.updateActivePiece(block, block => block.move());
+    }
+
+    private updateActivePiece(block: MovingBlock, update: ((block: MovingBlock) => MovingBlock), options: {propagateChanges: boolean} = {propagateChanges: false}) {
+        const newBlock = update(block);
+        if (!this.collides(newBlock, block) && !this.isOutOfScreen(newBlock.block)) {
+            this.state.updateActivePiece(block, newBlock, options);
         }
     }
 
-    private collides(player: Player, newBlock: Block): boolean {
-        if ([...this.state.playerPieces]
-            .filter(([k, v]) => k !== player)
-            .find(([k, v]) => v.block.collides(newBlock))) {
-            return true;
-        } else {
-            return !!this.state.frozenPieces
-                .find(p => p.collides(newBlock));
-        }
-    }
-
-    private collides2(newBlock: MovingBlock, ignore: MovingBlock): boolean {
+    private collides(block: MovingBlock, ignore?: MovingBlock): boolean {
         if ([...this.state.activePieces]
-            .filter(v => !v.equals(ignore))
-            .find(v => v.block.collides(newBlock.block))) {
+            .filter(other => ignore && !other.equals(ignore))
+            .find(other => other.block.collides(block.block))) {
             return true;
         } else {
             return !!this.state.frozenPieces
-                .find(p => p.collides(newBlock.block));
+                .find(other => other.collides(block.block));
         }
     }
 
@@ -86,15 +74,15 @@ export class Game {
     private freeze(player: Player) {
         const piece = this.state.playerPieces.get(player);
         if (piece) {
-            this.state.updatePlayerPiece(player, _ => undefined);
+            this.state.deletePlayerPiece(player);
             this.state.addFrozenPiece(piece.block);
         }
     }
 
     private newStartPiece(player: Player) {
         const newBlock = this.getStartPiece(player);
-        if (!this.collides(player, newBlock.block)) {
-            this.state.updatePlayerPiece(player, () => newBlock);
+        if (!this.collides(newBlock)) {
+            this.state.setPlayerPiece(player, newBlock);
         }
     }
 
@@ -129,6 +117,7 @@ export class Game {
         this.state.addFrozenPiece(new Block(b, co(0, 0)));
     }
 
+    // TODO refactor
     private handleFullLines() {
         const rows = new Set(this.state.activePieces
             .flatMap(active => active.block.blocks.map(b => b.y)));
@@ -141,14 +130,14 @@ export class Game {
                 // 1. Remove frozen pieces
                 this.state.frozenPieces.forEach(frozen => {
                     const newBlocks = frozen.split(row);
-                    this.state.removeFrozenPiece(frozen);// TODO no commit/trigger
-                    newBlocks.forEach(n => this.state.addFrozenPiece(n)); // TODO no commit/trigger
+                    this.state.removeFrozenPiece(frozen);
+                    newBlocks.forEach(n => this.state.addFrozenPiece(n));
                 });
 
-                // 2. Remove active pieces ==> player pieces become uncontrollable
+                // 2. Remove active pieces, player pieces become uncontrollable
                 this.state.activePieces.forEach(active => {
                     const newBlocks = active.split(row);
-                    this.state.removeActivePiece(active); // TODO no commit/trigger
+                    this.state.removeActivePiece(active);
                     newBlocks.forEach(n => this.state.addUncontrollablePiece(n));
                 });
             }
