@@ -1,5 +1,5 @@
 import {State} from './State';
-import {ALL_PLAYERS, Player} from './Player';
+import {ALL_PLAYERS, getPlayerDirection, Player} from './Player';
 import {Co, co} from '../blocks/Co';
 import {Block} from '../blocks/Block';
 import {randomBlock} from '../blocks/blocks';
@@ -99,10 +99,10 @@ export class Game {
         switch (player) {
             case Player.TOP_PLAYER:
                 const p1Shape = randomBlock();
-                return new MovingBlock(new Block(p1Shape, this.getStartPos(player).minus(p1Shape.middleBottom)), co(0, 1));
+                return new MovingBlock(new Block(p1Shape, this.getStartPos(player).minus(p1Shape.middleBottom)), getPlayerDirection(player));
             case Player.BOTTOM_PLAYER:
                 const p2Shape = randomBlock().rotate().rotate();
-                return new MovingBlock(new Block(p2Shape, this.getStartPos(player).minus(p2Shape.middleTop)), co(0, -1));
+                return new MovingBlock(new Block(p2Shape, this.getStartPos(player).minus(p2Shape.middleTop)), getPlayerDirection(player));
         }
     }
 
@@ -127,6 +127,8 @@ export class Game {
     }
 
     private handleFullLines() {
+        const playersWhoHadFullLine = new Set<Player>();
+        let fullLineRemoved = false;
         const rows = new Set(this.state.activePieces
             .flatMap(active => active.block.blocks.map(b => b.y)));
         rows.forEach(row => {
@@ -134,6 +136,8 @@ export class Game {
                 .flatMap(piece => piece.blocks)
                 .filter(co => co.y === row);
             if (cols.length >= this.state.width) {
+                fullLineRemoved = true;
+
                 // 1. Remove frozen pieces
                 this.state.frozenPieces.forEach(frozen => {
                     const newBlocks = frozen.split(row);
@@ -144,10 +148,48 @@ export class Game {
                 // 2. Remove active pieces, player pieces become uncontrollable
                 this.state.activePieces.forEach(active => {
                     const newBlocks = active.split(row);
+                    const isSplit = !(newBlocks.length === 1 && newBlocks[0].equals(active));
+                    if (isSplit) {
+                        ALL_PLAYERS.forEach(player => {
+                            const other = this.state.playerPieces.get(player);
+                            if (other && active.equals(other))
+                                playersWhoHadFullLine.add(player);
+                        });
+                    }
                     this.state.removeActivePiece(active);
                     newBlocks.forEach(n => this.state.addUncontrollablePiece(n));
                 });
             }
         });
+
+        this.addPenaltyForOpponents(playersWhoHadFullLine);
+
+        return fullLineRemoved;
+    }
+
+    private addPenaltyForOpponents(ps: Set<Player>) {
+        ps.forEach(player => {
+            ALL_PLAYERS
+                .filter(p => p !== player)
+                .forEach(opponent => this.addPenalty(opponent));
+        });
+    }
+
+    private addPenalty(player: Player) {
+        const direction = getPlayerDirection(player).y * -1;
+        const debris = createDebris(this.state.width, 1, 0.7);
+        for (let y = Math.floor(this.state.height / 2); y += direction; y < this.state.height) {
+            if (this.isEmptyLine(y)) {
+                this.state.addFrozenPiece(new Block(debris, co(0, y)));
+                break;
+            }
+        }
+    }
+
+    private isEmptyLine(row: number) {
+        const cols = this.state.allPieces
+            .flatMap(piece => piece.blocks)
+            .filter(co => co.y === row);
+        return cols.length === 0;
     }
 }

@@ -63,7 +63,7 @@ export class State {
         this._playerPieces.delete(player);
     }
 
-    public get playerPieces() {
+    public get playerPieces(): Map<Player, MovingBlock> {
         return new Map([...this._playerPieces]);
     }
 
