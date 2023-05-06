@@ -16,6 +16,10 @@
     height: 600px;
 }
 
+#animations {
+    z-index: 2;
+}
+
 #active-pieces {
     z-index: 1;
 }
@@ -35,7 +39,7 @@
 
 #winner {
     position: absolute;
-    z-index: 2;
+    z-index: 3;
     top: 150px;
     left: 90px;
     width: 320px;

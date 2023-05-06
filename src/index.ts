@@ -62,8 +62,9 @@ function handleInput(game: Game) {
 function initBoard(state: State) {
     const activeCanvas = document.getElementById("active-pieces") as HTMLCanvasElement;
     const inactiveCanvas = document.getElementById("inactive-pieces") as HTMLCanvasElement;
+    const animationsCanvas = document.getElementById("animations") as HTMLCanvasElement;
     const nextPiecesCanvas = document.getElementById("next-pieces") as HTMLCanvasElement;
     if (!activeCanvas || !inactiveCanvas) throw Error('No canvas found!');
 
-    return new Board(activeCanvas, inactiveCanvas, nextPiecesCanvas, state);
+    return new Board(activeCanvas, inactiveCanvas, nextPiecesCanvas, animationsCanvas, state);
 }

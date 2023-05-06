@@ -28,6 +28,9 @@ export class State {
     private gameOverTrigger$ = new ReplaySubject<{winner: Player}>(1);
     readonly gameOver$: Observable<{winner: Player}> = this.gameOverTrigger$.pipe();
 
+    private blocksRemovedTrigger$ = new ReplaySubject<Block[]>();
+    readonly blocksRemoved$ = this.blocksRemovedTrigger$.pipe();
+
     private _playerPieces = new Map<Player, MovingBlock>();
     private _uncontrolledPieces: MovingBlock[] = [];
     private _frozenPieces: Block[] = [];
@@ -68,6 +71,10 @@ export class State {
         }
 
         this._uncontrolledPieces = this._uncontrolledPieces.filter(b => !b.equals(block));
+    }
+
+    public blocksRemoved(block: Block[]) {
+        this.blocksRemovedTrigger$.next(block);
     }
 
     public removePlayerPiece(player: Player) {

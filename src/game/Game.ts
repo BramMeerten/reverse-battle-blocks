@@ -152,8 +152,8 @@ export class Game {
             .flatMap(active => active.block.blocks.map(b => b.y)));
         rows.forEach(row => {
             const cols = this.state.allPieces
-                .flatMap(piece => piece.blocks)
-                .filter(co => co.y === row);
+                .flatMap(piece => piece.blocks.map(co => ({co, color: piece.color})))
+                .filter(piece => piece.co.y === row);
             if (cols.length >= this.state.width) {
                 fullLineRemoved = true;
 
@@ -178,6 +178,8 @@ export class Game {
                     this.state.removeActivePiece(active);
                     newBlocks.forEach(n => this.state.addUncontrollablePiece(n));
                 });
+
+                this.state.blocksRemoved(cols.map(col => new Block(new UnplacedBlock([col.co], col.color), co(0, 0))))
             }
         });
 
