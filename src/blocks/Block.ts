@@ -17,6 +17,10 @@ export class Block {
         });
     }
 
+    public get blocksRelativeToBoundingBox() {
+        return this.block.blocksRelativeToBoundingBox;
+    }
+
     public get color() {
         return this.block.color;
     }

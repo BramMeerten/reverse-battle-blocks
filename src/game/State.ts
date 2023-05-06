@@ -1,7 +1,8 @@
-import {BehaviorSubject, map, Observable} from 'rxjs';
+import {BehaviorSubject, map, Observable, ReplaySubject} from 'rxjs';
 import {Block} from '../blocks/Block';
 import {Player} from './Player';
 import {MovingBlock} from '../blocks/MovingBlock';
+import {UnplacedBlock} from '../blocks/UnplacedBlock';
 
 export class State {
 
@@ -19,9 +20,15 @@ export class State {
         map(_ => this.frozenPieces)
     );
 
+    private nextPiecesTrigger$ = new ReplaySubject<Player>(1);
+    readonly nextPieces$: Observable<{player: Player, block: UnplacedBlock}> = this.nextPiecesTrigger$.pipe(
+        map(player => ({player, block: this.getNextPiece(player)!}))
+    );
+
     private _playerPieces = new Map<Player, MovingBlock>();
     private _uncontrolledPieces: MovingBlock[] = [];
     private _frozenPieces: Block[] = [];
+    private _nextPieces: Map<Player, UnplacedBlock> = new Map();
     private frozenPiecesWereUpdated = false;
 
     public updateActivePiece(prev: MovingBlock, newBlock: MovingBlock, options: {propagateChanges: boolean} = {propagateChanges: false}) {
@@ -71,6 +78,10 @@ export class State {
         return [...this._frozenPieces];
     }
 
+    public getNextPiece(player: Player): UnplacedBlock | undefined {
+        return this._nextPieces.get(player);
+    }
+
     public get activePieces(): MovingBlock[] {
         return [...this._playerPieces.values(), ...this._uncontrolledPieces];
     }
@@ -85,6 +96,11 @@ export class State {
             this.frozenPiecesTrigger$.next();
             this.frozenPiecesWereUpdated = false;
         }
+    }
+
+    public setNextPiece(player: Player, block: UnplacedBlock) {
+        this._nextPieces.set(player, block);
+        this.nextPiecesTrigger$.next(player);
     }
 
     private updatePlayerPiece(prev: MovingBlock, newBlock: MovingBlock): boolean {

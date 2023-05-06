@@ -24,6 +24,11 @@ export class UnplacedBlock {
         return co(box.min.x + ((box.max.x - box.min.x) / 2), box.min.y)
     }
 
+    public get blocksRelativeToBoundingBox() {
+        const min = this.boundingBox.min;
+        return this.blocks.map(block => co(block.x - min.x, block.y - min.y));
+    }
+
     split(row: number): UnplacedBlock[] {
         let remainingBlocks = this.blocks.filter(co => co.y != row);
         const connectedBlocks: Co[][] = [];

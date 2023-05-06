@@ -83,26 +83,26 @@ export class Game {
 
     private addStartPiecesIfNeeded() {
         ALL_PLAYERS.forEach(player => {
-            if (!this.state.playerPieces.get(player))
-                this.newStartPiece(player);
+            if (!this.state.playerPieces.get(player)) {
+                this.newPlayerPiece(player);
+                this.state.setNextPiece(player, randomBlock());
+            }
         });
     }
 
-    private newStartPiece(player: Player) {
-        const newBlock = this.getStartPiece(player);
+    private newPlayerPiece(player: Player) {
+        const newBlock = this.createMovingPlayerPiece(player, this.state.getNextPiece(player) || randomBlock());
         if (!this.collides(newBlock)) {
             this.state.setPlayerPiece(player, newBlock);
         }
     }
 
-    private getStartPiece(player: Player) {
+    private createMovingPlayerPiece(player: Player, block: UnplacedBlock) {
         switch (player) {
             case Player.TOP_PLAYER:
-                const p1Shape = randomBlock();
-                return new MovingBlock(new Block(p1Shape, this.getStartPos(player).minus(p1Shape.middleBottom)), getPlayerDirection(player));
+                return new MovingBlock(new Block(block, this.getStartPos(player).minus(block.middleBottom)), getPlayerDirection(player));
             case Player.BOTTOM_PLAYER:
-                const p2Shape = randomBlock().rotate().rotate();
-                return new MovingBlock(new Block(p2Shape, this.getStartPos(player).minus(p2Shape.middleTop)), getPlayerDirection(player));
+                return new MovingBlock(new Block(block.rotate().rotate(), this.getStartPos(player).minus(block.rotate().rotate().middleTop)), getPlayerDirection(player));
         }
     }
 
