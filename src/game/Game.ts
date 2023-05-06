@@ -142,7 +142,7 @@ export class Game {
         const debrisHeight = 3;
         const debris = createDebris(this.state.width, debrisHeight, 0.3);
         this.state.addFrozenPiece(new Block(debris, co(0, Math.floor((this.state.height / 2) - (debrisHeight / 2)))));
-        this.state.addFrozenPiece(new Block(b, co(0, 0)));
+        // this.state.addFrozenPiece(new Block(b, co(0, 0)));
     }
 
     private handleFullLines() {

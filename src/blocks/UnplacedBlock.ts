@@ -16,12 +16,12 @@ export class UnplacedBlock {
 
     get middleBottom() {
         const box = this.boundingBox;
-        return co(box.min.x + ((box.max.x - box.min.x) / 2), box.max.y)
+        return co(box.min.x + Math.floor((box.max.x - box.min.x) / 2), box.max.y)
     }
 
     get middleTop() {
         const box = this.boundingBox;
-        return co(box.min.x + ((box.max.x - box.min.x) / 2), box.min.y)
+        return co(box.min.x + Math.floor((box.max.x - box.min.x) / 2), box.min.y)
     }
 
     public get blocksRelativeToBoundingBox() {

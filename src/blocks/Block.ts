@@ -34,7 +34,7 @@ export class Block {
     }
 
     collides(other: Block): boolean {
-        const boundingBoxesCollide =this.boundingBox.collides(other.boundingBox);
+        const boundingBoxesCollide = this.boundingBox.collides(other.boundingBox);
         return boundingBoxesCollide && !!other.blocks.find(block => {
             return this.blocks.find(bl => bl.equals(block))
         });
@@ -52,6 +52,6 @@ export class Block {
 
     private calculateBoundingBox() {
         const box = this.block.boundingBox;
-        return new Area(box.min.plus(this.pos),box.max.plus(this.pos));
+        return new Area(box.min.plus(this.pos), box.max.plus(this.pos));
     }
 }
