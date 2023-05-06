@@ -179,7 +179,7 @@ export class Game {
                     newBlocks.forEach(n => this.state.addUncontrollablePiece(n));
                 });
 
-                this.state.blocksRemoved(cols.map(col => new Block(new UnplacedBlock([col.co], col.color), co(0, 0))))
+                this.state.blocksRemoved(cols);
             }
         });
 

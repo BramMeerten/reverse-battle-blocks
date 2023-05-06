@@ -5,6 +5,7 @@ import {MovingBlock} from '../blocks/MovingBlock';
 import {UnplacedBlock} from '../blocks/UnplacedBlock';
 import {Player} from '../game/Player';
 import {RGBA} from '../blocks/RGBA';
+import {Co} from '../blocks/Co';
 
 export class Board {
 
@@ -69,22 +70,28 @@ export class Board {
         pieces.forEach(p => this.drawBlock(p, this.inactiveCtx));
     }
 
-    private animateRemovedBlocks = (pieces: Block[]) => {
+    private animateRemovedBlocks = (pieces: { co: Co, color: Color }[]) => {
         let i = 1;
-        const states = [0.5, 0.4, 0.3, 0.2, 0.1];
-        const interval = setInterval(() => {
-            this.animationsCtx.clearRect(0, 0, this.animationsCanvas.width, this.animationsCanvas.height);
+        const animate = () => {
+            const start = (this.state.width / 2) - i;
+            const stop = (this.state.width / 2) + i;
+
             pieces.forEach(block => {
-                const color = RGBA.fromColor(block.color, states[i % states.length]);
-                this.drawBlock(block, this.animationsCtx, color.toHtml());
+                if (block.co.x >= start && block.co.x <= stop) {
+                    this.clearCell(block.co, this.animationsCtx);
+                } else {
+                    this.animationsCtx.fillStyle = RGBA.fromColor(block.color).toHtml()
+                    this.drawCell(block.co, this.animationsCtx);
+                }
             });
             i++;
-        }, 50);
-        setTimeout(() => {
-            clearInterval(interval)
-            this.animationsCtx.clearRect(0, 0, this.animationsCanvas.width, this.animationsCanvas.height);
-        }, 500);
-
+            if (start <= 0) {
+                clearInterval(interval);
+                this.animationsCtx.clearRect(0, 0, this.animationsCanvas.width, this.animationsCanvas.height);
+            }
+        };
+        const interval = setInterval(animate, 50);
+        animate();
     }
 
     private get cellWidth() {
@@ -95,10 +102,16 @@ export class Board {
         return this.activeCanvas.height / this.state.height;
     }
 
-    private drawBlock = (block: Block, ctx: CanvasRenderingContext2D = this.ctx, overrideColor?: string) => {
-        ctx.fillStyle = overrideColor ? overrideColor : RGBA.fromColor(block.color).toHtml();
-        block.blocks.forEach(pos => {
-            ctx.fillRect(pos.x * this.cellWidth, pos.y * this.cellHeight, this.cellWidth, this.cellHeight);
-        });
+    private drawBlock = (block: Block, ctx: CanvasRenderingContext2D = this.ctx) => {
+        ctx.fillStyle = RGBA.fromColor(block.color).toHtml();
+        block.blocks.forEach(pos => this.drawCell(pos, ctx));
+    }
+
+    private drawCell = (pos: Co, ctx: CanvasRenderingContext2D) => {
+        ctx.fillRect(pos.x * this.cellWidth, pos.y * this.cellHeight, this.cellWidth, this.cellHeight);
+    }
+
+    private clearCell = (pos: Co, ctx: CanvasRenderingContext2D) => {
+        ctx.clearRect(pos.x * this.cellWidth, pos.y * this.cellHeight - 1, this.cellWidth, this.cellHeight + 2);
     }
 }

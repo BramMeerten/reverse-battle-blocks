@@ -3,6 +3,8 @@ import {Block} from '../blocks/Block';
 import {Player} from './Player';
 import {MovingBlock} from '../blocks/MovingBlock';
 import {UnplacedBlock} from '../blocks/UnplacedBlock';
+import {Co} from '../blocks/Co';
+import {Color} from '../blocks/Color';
 
 export class State {
 
@@ -28,7 +30,7 @@ export class State {
     private gameOverTrigger$ = new ReplaySubject<{winner: Player}>(1);
     readonly gameOver$: Observable<{winner: Player}> = this.gameOverTrigger$.pipe();
 
-    private blocksRemovedTrigger$ = new ReplaySubject<Block[]>();
+    private blocksRemovedTrigger$ = new ReplaySubject<{ co: Co, color: Color }[]>();
     readonly blocksRemoved$ = this.blocksRemovedTrigger$.pipe();
 
     private _playerPieces = new Map<Player, MovingBlock>();
@@ -73,7 +75,7 @@ export class State {
         this._uncontrolledPieces = this._uncontrolledPieces.filter(b => !b.equals(block));
     }
 
-    public blocksRemoved(block: Block[]) {
+    public blocksRemoved(block: {co: Co, color: Color}[]) {
         this.blocksRemovedTrigger$.next(block);
     }
 
