@@ -18,11 +18,18 @@ export class Board {
         this.ctx = activeCanvas.getContext("2d")!;
         this.inactiveCtx = inactiveCanvas.getContext("2d")!;
         this.nextPiecesCtx = nextPiecesCanvas.getContext("2d")!;
-        if (!this.ctx || !this.inactiveCtx) throw Error('Could not get canvas content');
+        if (!this.ctx || !this.inactiveCtx || !this.nextPiecesCtx) throw Error('Could not get canvas content');
+        this.clearBoard();
 
         this.state.activePieces$.subscribe(pieces => this.drawActive(pieces));
         this.state.frozenPieces$.subscribe(pieces => this.drawInactive(pieces));
         this.state.nextPieces$.subscribe(next => this.drawNextPiece(next));
+    }
+
+    private clearBoard() {
+        this.ctx.clearRect(0, 0, this.activeCanvas.width, this.activeCanvas.height);
+        this.inactiveCtx.clearRect(0, 0, this.inactiveCanvas.width, this.inactiveCanvas.height);
+        this.nextPiecesCtx.clearRect(0, 0, this.nextPiecesCanvas.width, this.nextPiecesCanvas.height);
     }
 
     private drawNextPiece({player, block}: { player: Player, block: UnplacedBlock }) {

@@ -1,5 +1,11 @@
+#container {
+    width: 400px;
+    height: 600px;
+}
+
 #board-container {
     position: relative;
+    display: none
 }
 
 .canvas {
@@ -25,4 +31,16 @@
     left: 400px;
     width: 100px;
     height: 600px;
+}
+
+#winner {
+    position: absolute;
+    z-index: 2;
+    top: 150px;
+    left: 90px;
+    width: 320px;
+    height: 200px;
+    display: none;
+    border: 1px solid black;
+    background-color: white;
 }

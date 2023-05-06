@@ -25,10 +25,14 @@ export class State {
         map(player => ({player, block: this.getNextPiece(player)!}))
     );
 
+    private gameOverTrigger$ = new ReplaySubject<{winner: Player}>(1);
+    readonly gameOver$: Observable<{winner: Player}> = this.gameOverTrigger$.pipe();
+
     private _playerPieces = new Map<Player, MovingBlock>();
     private _uncontrolledPieces: MovingBlock[] = [];
     private _frozenPieces: Block[] = [];
     private _nextPieces: Map<Player, UnplacedBlock> = new Map();
+    private _gameOver = false;
     private frozenPiecesWereUpdated = false;
 
     public updateActivePiece(prev: MovingBlock, newBlock: MovingBlock, options: {propagateChanges: boolean} = {propagateChanges: false}) {
@@ -101,6 +105,18 @@ export class State {
     public setNextPiece(player: Player, block: UnplacedBlock) {
         this._nextPieces.set(player, block);
         this.nextPiecesTrigger$.next(player);
+    }
+
+    public setGameOver(winner: Player) {
+        this._gameOver = true;
+        if (!this.gameOverTrigger$.closed) {
+            this.gameOverTrigger$.next({winner});
+            this.gameOverTrigger$.complete();
+        }
+    }
+
+    public get gameOver() {
+        return this._gameOver;
     }
 
     private updatePlayerPiece(prev: MovingBlock, newBlock: MovingBlock): boolean {

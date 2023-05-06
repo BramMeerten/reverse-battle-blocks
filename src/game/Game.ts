@@ -14,6 +14,9 @@ export class Game {
     }
 
     public tick() {
+        if (this.state.gameOver)
+            return
+
         const startPositions = this.state.playerPieces;
 
         this.handleFullLines();
@@ -42,6 +45,12 @@ export class Game {
 
     private updateActivePiece(block: MovingBlock, update: (block: MovingBlock) => MovingBlock, options: {propagateChanges: boolean} = {propagateChanges: false}) {
         const newBlock = update(block);
+        const reachedPlayer = this.hasReachedPlayer(block);
+        if (reachedPlayer !== undefined) {
+            this.state.setGameOver(reachedPlayer == Player.TOP_PLAYER ? Player.BOTTOM_PLAYER : Player.TOP_PLAYER);
+            return;
+        }
+
         if (!this.collides(newBlock, block) && !this.isOutOfScreen(newBlock.block)) {
             this.state.updateActivePiece(block, newBlock, options);
         }
@@ -61,6 +70,14 @@ export class Game {
     private isOutOfScreen(newBlock: Block): boolean {
         return !!newBlock.blocks
             .find(b => b.x < 0 || b.x >= this.state.width);
+    }
+
+    private hasReachedPlayer(block: MovingBlock): Player | undefined {
+        if (block.direction.y < 0 && block.block.boundingBox.min.y < 0) {
+            return Player.TOP_PLAYER;
+        } else if (block.direction.y > 0 && block.block.boundingBox.max.y >= this.state.height) {
+            return Player.BOTTOM_PLAYER;
+        }
     }
 
     private freezePlayersIfNotMoved(startPositions: Map<Player, MovingBlock>) {
@@ -94,6 +111,8 @@ export class Game {
         const newBlock = this.createMovingPlayerPiece(player, this.state.getNextPiece(player) || randomBlock());
         if (!this.collides(newBlock)) {
             this.state.setPlayerPiece(player, newBlock);
+        } else {
+            this.state.setGameOver(player === Player.TOP_PLAYER ? Player.BOTTOM_PLAYER : Player.TOP_PLAYER);
         }
     }
 
